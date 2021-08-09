@@ -80,6 +80,15 @@ public class ArrayList<T> implements Iterable<T> {
 		return value;
 	}
 
+	public T removeWithoutMoving(int index) {
+		if (index < 0 || index >= size)
+			throw new IndexOutOfBoundsException();
+		T value = arr[index];
+		arr[index] = null;
+		capacity = --size;
+		return value;
+	}
+
 	public T remove(Object obj) {
 		int index = indexOf(obj);
 		if (index > -1)
