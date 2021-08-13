@@ -11,8 +11,8 @@ public interface Tree<T extends Comparable<T>> {
 
 	boolean contains(T element);
 
-	boolean add(T element);
+	void add(T element);
 
-	boolean remove(T element);
+	void remove(T element);
 	Iterator<T> traverse(TreeType type);
 }

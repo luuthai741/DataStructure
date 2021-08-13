@@ -3,21 +3,21 @@ package Tree;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
+import Queue.Queue;
+import Queue.QueueLinkedList;
 import Stack.LinkedListStack;
 import Stack.Stack;
 
 public class BinarySearchTree<T extends Comparable<T>> implements Tree<T> {
-	private int nodeCount = 0;
-	private Node root = null;
+	private int size;
+	private Node<T> root = null;
 
-	@Override
-	public boolean isEmpty() {
-		return nodeCount == 0;
+	public int size() {
+		return size;
 	}
 
-	@Override
-	public int size() {
-		return nodeCount;
+	public boolean isEmpty() {
+		return size == 0;
 	}
 
 	@Override
@@ -31,24 +31,21 @@ public class BinarySearchTree<T extends Comparable<T>> implements Tree<T> {
 	}
 
 	@Override
-	public boolean add(T element) {
-		if (contains(element))
-			return false;
-		else {
-			root = add(root, element);
-			nodeCount++;
-			return true;
+	public void add(T element) {
+		if (contains(element)) {
+			return;
 		}
+		root = add(root, element);
+		size++;
 	}
 
 	@Override
-	public boolean remove(T element) {
-		if (!contains(element))
-			return false;
-		else {
+	public void remove(T element) {
+		if (!contains(element)) {
+			return;
+		} else {
 			root = remove(root, element);
-			nodeCount--;
-			return true;
+			size--;
 		}
 	}
 
@@ -77,80 +74,134 @@ public class BinarySearchTree<T extends Comparable<T>> implements Tree<T> {
 		}
 	}
 
-	private Iterator<T> postOrderTraverse() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private Iterator<T> levelOrderTraverse() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private Iterator<T> inOrderTraverse() {
-		final int expectedCount = nodeCount;
-		Stack<Node> stack = new LinkedListStack<Node>();
+	// ROOT LEFT RIGHT
+	private Iterator<T> preOrderTraverse() {
+		final int expectedCount = size;
+		Stack<Node<T>> stack = new LinkedListStack<Node<T>>();
 		stack.push(root);
 		return new Iterator<T>() {
-			Node trav = root;
 
 			@Override
 			public boolean hasNext() {
-				if (expectedCount != nodeCount)
+				if (expectedCount != size)
 					throw new ConcurrentModificationException();
 				return root != null && stack.isEmpty();
 			}
 
 			@Override
 			public T next() {
-				if (expectedCount != nodeCount)
+				if (expectedCount != size)
 					throw new ConcurrentModificationException();
+				else {
+					Node<T> node = stack.pop();
+					if (node.getLeft() != null) {
+						stack.push(node.getLeft());
+					} else if (node.getRight() != null) {
+						stack.push(node.getRight());
+					}
+					return node.getData();
+				}
+			}
+		};
+	}
+
+	private Iterator<T> postOrderTraverse() {
+		final int expectedCount = size;
+		Stack<Node<T>> stack = new LinkedListStack<Node<T>>();
+		stack.push(root);
+		return new Iterator<T>() {
+			Node<T> trav = root;
+
+			@Override
+			public boolean hasNext() {
+				if (expectedCount != size) {
+					throw new ConcurrentModificationException();
+				}
+				return root != null && stack.isEmpty();
+			}
+
+			@Override
+			public T next() {
+				if (expectedCount != size) {
+					throw new ConcurrentModificationException();
+				}
 				while (trav != null && trav.getLeft() != null) {
 					stack.push(trav.getLeft());
 					trav = trav.getLeft();
 				}
-				Node node = stack.pop();
-				if (node.getRight() != null) {
-					stack.push(node.getRight());
-					trav = node.getRight();
+				if (trav.getRight() != null) {
+					stack.push(trav.getRight());
+					trav = trav.getRight();
 				}
-				return (T) node.getData();
+				Node<T> node = stack.pop();
+				return node.getData();
 			}
 		};
 	}
 
-	private Iterator<T> preOrderTraverse() {
-		final int expectedCount = nodeCount;
-		Stack<Node> stack = new LinkedListStack<Node>();
+	private Iterator<T> levelOrderTraverse() {
+		if(root == null) return null;
+		Queue<Node<T>> queue = new QueueLinkedList<Node<T>>();
+		queue.enQueue(root);
+		queue.enQueue(null);
+		while(!queue.isEmpty()) {
+			Node<T> currentNode = queue.dequeue();
+			if(currentNode == null) {
+				if(!queue.isEmpty()) {
+					queue.enQueue(null);
+				}
+			}else {
+				if(currentNode.getLeft() != null) {
+					queue.enQueue(currentNode.getLeft());
+				}else if(currentNode.getRight() != null) {
+					queue.enQueue(currentNode.getRight());
+				}
+				queue.dequeue();
+			}
+		}
+		return null;
+	}
+
+	// LEFT ROOT RIGHT
+	private Iterator<T> inOrderTraverse() {
+		final int expectedCount = size;
+		Stack<Node<T>> stack = new LinkedListStack<Node<T>>();
 		stack.push(root);
 		return new Iterator<T>() {
+			Node<T> trav = root;
+
 			@Override
 			public boolean hasNext() {
-				if (expectedCount != nodeCount)
+				if (expectedCount != size) {
 					throw new ConcurrentModificationException();
+				}
 				return root != null && stack.isEmpty();
 			}
 
 			@Override
 			public T next() {
-				if (expectedCount != nodeCount)
+				if (expectedCount != size) {
 					throw new ConcurrentModificationException();
-				Node node = stack.pop();
+				}
+				while (trav != null && trav.getLeft() != null) {
+					stack.push(trav.getLeft());
+					trav = trav.getLeft();
+				}
+				Node<T> node = stack.pop();
 				if (node.getRight() != null) {
 					stack.push(node.getRight());
+					trav = node.getRight();
 				}
-				if (node.getLeft() != null) {
-					stack.push(node.getLeft());
-				}
-				return (T) node.getData();
+				return node.getData();
 			}
 		};
 	}
 
-	private int height(Node node) {
-		if (node == null)
+	private int height(Node<T> node) {
+		if (node == null) {
 			return 0;
-		return 1 + Math.max(height(node.getLeft()), height(node.getLeft()));
+		}
+		return 1 + Math.max(height(node.getLeft()), height(node.getRight()));
 	}
 
 	private boolean contains(Node<T> node, T element) {
@@ -171,46 +222,71 @@ public class BinarySearchTree<T extends Comparable<T>> implements Tree<T> {
 		if (node == null) {
 			node = new Node<T>(element, null, null);
 		} else {
-			int index = element.compareTo(node.getData());
-			if (index > 0) {
-				node.setRight(add(node.getRight(), element));
-			} else {
+			int check = element.compareTo(node.getData());
+			if (check < 0) {
 				node.setLeft(add(node.getLeft(), element));
+			} else if (check > 0) {
+				node.setRight(add(node.getRight(), element));
 			}
 		}
 		return node;
 	}
 
-	private Node remove(Node node, T element) {
-		int result = element.compareTo((T) node.getData());
-		if (result < 0) {
+	private Node remove(Node<T> node, T element) {
+		if (node == null)
+			return node;
+		int check = element.compareTo(node.getData());
+		if (check < 0) {
 			node.setLeft(remove(node.getLeft(), element));
-		} else if (result > 0) {
+		} else if (check > 0) {
 			node.setRight(remove(node.getRight(), element));
 		} else {
-			if (node.getLeft() == null) {
-				Node rightNode = node.getRight();
-				node.setData(null);
-				node = null;
-				return rightNode;
-			} else if (node.getRight() == null) {
-				Node leftNode = node.getLeft();
-				node.setData(null);
-				node = null;
-				return leftNode;
+			if (node.getLeft() == null && node.getRight() == null) { // đây là node leaf
+				return null;
+			} else if (node.getRight() != null) {
+				node.setData(successor(node));
+				node.setRight(remove(node.getRight(), node.getData()));
 			} else {
-				T temp = minRight(node);
-				node.setData(temp);
-				node.setRight(remove(node.getRight(), temp));
+				node.setData(predecessor(node));
+				node.setLeft(remove(node.getLeft(), node.getData()));
 			}
 		}
 		return node;
 	}
 
-	private T minRight(Node node) {
+	private T successor(Node<T> node) {
+		node = node.getRight();
 		while (node.getLeft() != null) {
-			node.getLeft();
+			node = node.getLeft();
 		}
-		return (T) node.getData();
+		return node.getData();
+	}
+
+	private T predecessor(Node<T> node) {
+		node = node.getLeft();
+		while (node.getRight() != null) {
+			node = node.getRight();
+		}
+		return node.getData();
+	}
+
+	@Override
+	public String toString() {
+		if (isEmpty())
+			return "[]";
+		else {
+			StringBuilder builder = new StringBuilder();
+			return traverseLNR(root, builder).toString();
+		}
+	}
+
+	private String traverseLNR(Node<T> node, StringBuilder builder) {
+		if (node != null) {
+			builder.append(node.getData()).append(" ");
+			traverseLNR(node.getLeft(), builder);
+
+			traverseLNR(node.getRight(), builder);
+		}
+		return builder.toString();
 	}
 }
